@@ -3,7 +3,7 @@ import { useCluedo } from '../components/CluedoContext';
 import { useEffect, useRef } from 'react';
 
 
-export default function PlayerHorizontalScrollWindow({showPlayer}: {showPlayer: string}) {
+export default function PlayerHorizontalScrollWindow({showPlayer}: {showPlayer?: string}) {
   const { game, service } = useCluedo();
 
   const scrollRef = useRef<HTMLDivElement>(null)

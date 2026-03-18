@@ -3,7 +3,7 @@ import { type ChangeEvent } from 'react';
 import { useCluedo } from '../components/CluedoContext';
 import type { Player } from '../scripts/cluedo';
 
-export default function GameBoard() {
+export const PlayerSettings = () => {
   const { game, service } = useCluedo();
 
   const handlePlayerNameChange = (name: string, player: Player) => {
