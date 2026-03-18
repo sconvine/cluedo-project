@@ -1,24 +1,21 @@
 import { Routes, Route, Link } from 'react-router-dom';
 import GameBoard from './pages/GameBoard';
-import { CluedoContext } from './components/CluedoContext';
-import { CluedoService } from './scripts/cluedo';
-
-const cluedoService = new CluedoService();
+import { CluedoProvider } from './components/CluedoContext';
 
 function App() {
     return (
-      <CluedoContext.Provider value={cluedoService}>
-        <nav>
+      <CluedoProvider>
+        {/* <nav>
           <ul>
             <li>
               <Link to="/">Dashboard</Link>
             </li>
           </ul>
-        </nav>
+        </nav> */}
         <Routes>
           <Route path="/" element={<GameBoard />} />
         </Routes>
-      </CluedoContext.Provider>
+      </CluedoProvider>
     );
 }
 

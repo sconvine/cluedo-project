@@ -1,50 +1,88 @@
-import { FormControl, InputLabel, MenuItem, Select, TextField, type SelectChangeEvent } from '@mui/material';
-import { useCluedoService } from '../components/CluedoContext';
-import type { ChangeEvent } from 'react';
-import type { Player } from '../scripts/cluedo';
+import { AppBar, Box, IconButton, Menu, MenuItem, Toolbar, Typography } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { CardPicker } from '../components/CardPicker';
+import { useCluedo } from '../components/CluedoContext';
+
+import SettingsIcon from '@mui/icons-material/Settings';
+import PlayerHorizontalScrollWindow from '../components/PlayerHorizontalScrollWindow';
 
 export default function GameBoard() {
-  const cluedoService = useCluedoService();
+  const { game, service } = useCluedo();
   // set this manually at first
-  cluedoService.initPlayers(4)
 
-  const handlePlayerNameChange = (name: string, player: Player) => {
-    cluedoService.updatePlayer({ ...player, name })
-  }
-  const handlePlayerCharacterChanges = (characterId: string, player: Player) => {
-    cluedoService.updatePlayer({ ...player, characterId })
-  }
+  useEffect(() => {
+    service.initGame({ numberOfPlayers: 4 })
+  }, [])
 
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
-  return <>
-    <h1>GameBoard</h1>
+  const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
 
-    {
-      // Configure Players
-      cluedoService.game.players.map((player) =>
-        <div key={player.id} className='player-box'>
-          <TextField
-            id={`${player.id}-player-name`}
-            label="Player Name"
-            defaultValue={player.name}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => handlePlayerNameChange(e.target.value, player)}
-          />
-          <FormControl sx={{ m: 1, minWidth: 120 }}>
-            <InputLabel id="character-select-label">Character</InputLabel>
-            <Select
-              labelId="character-select-label"
-              id={`${player.id}-character`}
-              value={player.characterId}
-              onChange={(e: SelectChangeEvent) => handlePlayerCharacterChanges(e.target.value, player)}
-              label="Character"
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  return <div className='wrapper'>
+      {/* App bar */}
+      <AppBar position="static">
+        <Toolbar>
+          <Typography variant="h5" component="div" sx={{ flexGrow: 1, textAlign: 'start' }}>
+            Cluedo Tracker
+          </Typography>
+
+          <div>
+            <IconButton
+              size="large"
+              aria-label="account of current user"
+              aria-controls="menu-appbar"
+              aria-haspopup="true"
+              onClick={handleMenu}
+              color="inherit"
             >
-              {cluedoService.characters.map((character) => <MenuItem value={character.id}>{character.name}</MenuItem>)}
-            </Select>
-          </FormControl>
-        </div>
+              <SettingsIcon />
+            </IconButton>
+            <Menu
+              id="menu-appbar"
+              anchorEl={anchorEl}
+              anchorOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+              }}
+              keepMounted
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+              }}
+              open={Boolean(anchorEl)}
+              onClose={handleClose}
+            >
+              <MenuItem onClick={handleClose}>Player Settings</MenuItem>
+              <MenuItem onClick={handleClose}>Reset Game</MenuItem>
+              <MenuItem onClick={handleClose}>Undo</MenuItem>
+            </Menu>
+          </div>
+        </Toolbar>
+      </AppBar>
 
-      )
-    }
-    {cluedoService.game.players.map((player) => <p>{player.name}</p>)}
-  </>;
+
+
+
+      <div className='player-window'>
+        <PlayerHorizontalScrollWindow showPlayer={game.players[2].id} />
+      </div>
+
+
+      <div className='card-window'>
+        <CardPicker disabledIds={[]} selectedIds={[]} onChange={console.log} />
+      </div>
+
+
+      <div className='player-window'>
+        <PlayerHorizontalScrollWindow showPlayer={game.players[3].id} />
+      </div>
+    </div>
+
+  
 }
