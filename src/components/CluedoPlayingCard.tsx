@@ -1,20 +1,57 @@
-import { Box, Button, Card, CardActions, CardContent, Typography } from "@mui/material";
+import { Box, Button, Paper, Typography } from "@mui/material";
 import { useCluedo } from "./CluedoContext";
+// import { useState } from "react";
 
-export const CluedoPlayingCard = ({ card, disabled, handleClick, selected }: { card: any; disabled?: boolean; handleClick: (id: string) => void; selected: boolean }) => {
-    const { service } = useCluedo();
+export const CluedoPlayingCard = ({
+    card,
+    disabled,
+    handleClick,
+    selected,
+    hidden
+}: {
+    card: any;
+    disabled?: boolean;
+    handleClick: (id: string, type: string) => void;
+    selected: boolean;
+    hidden: boolean
+}) => {
+    const { game, service } = useCluedo();
+
+    // const [ownerSelected, setOwnerSelected] = useState(null)
+
+    const owner = game.mode === 'normal' ? null : service.getPlayer(card.ownerId)
+    const ownerColor = owner?.character ? service.getCard(owner.character)?.color : '#efefef'
+
     return (
-        <Button disabled={disabled} onClick={() => handleClick(card.id)} sx={{ p: 0 }} className={`card-wrapper ${selected ? 'selected' : ''}`}>
-            <Card key={card.id} className={`card ${card.type} ${selected ? 'selected' : ''}`}>
-                <CardContent sx={{ p: 0 }}>
-                    <Box sx={{ bgcolor: card.color, borderBottom: '1px solid black', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        <Typography variant="caption" color={card.color === '#ffffff' ? 'black' : 'white'}>{card.name}</Typography>
+        <Button disabled={disabled} onClick={() => handleClick(card.id, card.type)} sx={{ p: 0 }} className={`card-wrapper ${selected ? 'selected' : ''} ${hidden ? 'hidden' : 'show'}`}>
+            <Paper elevation={selected ? 8 : 3} sx={{
+                width: '100%',
+                height: '100%',
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+                borderRadius: 1
+            }}>
+                <Box sx={{
+                    bgcolor: card.color,
+                    width: '100%',
+                    height: '100%',
+                }}>
+                    <Typography variant="caption" color={card.color === '#ffffff' ? 'black' : 'white'}>{card.name}</Typography>
+                </Box>
+                {owner &&
+                    <Box sx={{
+                        bgcolor: ownerColor,
+                        width: '100%',
+                        height: '20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                    }}>
+                        <Typography variant="caption" color={ownerColor && ownerColor !== '#ffffff' && ownerColor !== '#efefef' ? '#ffffff' : '#000000'}>{service.getPlayer(card.ownerId)?.name}</Typography>
                     </Box>
-                </CardContent>
-                <CardActions >
-                    <Typography variant="caption">{service.getPlayer(card.ownerId)?.name ?? '?'}</Typography>
-                </CardActions>
-            </Card>
+                }
+            </Paper>
         </Button>
     )
 }

@@ -9,14 +9,14 @@ export const PlayerSettings = () => {
   const handlePlayerNameChange = (name: string, player: Player) => {
     service.updatePlayer({ ...player, name })
   }
-  const handlePlayerCharacterChanges = (characterId: string, player: Player) => {
-    service.updatePlayer({ ...player, characterId })
+  const handlePlayerCharacterChanges = (character: string, player: Player) => {
+    service.updatePlayer({ ...player, character })
   }
 
   return <>
     {game.players.map((player) =>
       <div key={player.id} className='player-box'>
-        <Avatar alt={player.name} sx={{ bgcolor: player.characterId ? service.getCard(player.characterId)?.color : undefined }} />
+        <Avatar alt={player.name} sx={{ bgcolor: player.character ? service.getCard(player.character)?.color : undefined }} />
         <TextField
           id={`${player.id}-player-name`}
           label="Player Name"
@@ -30,10 +30,10 @@ export const PlayerSettings = () => {
             id={`${player.id}-character`}
             onChange={(e: SelectChangeEvent) => handlePlayerCharacterChanges(e.target.value, player)}
             label="Character"
-            defaultValue={player.characterId || ''}
+            defaultValue={player.character || ''}
             sx={{ minWidth: 180 }}
           >
-            {service.game.cards.filter((c) => c.type === 'character').map((character) => <MenuItem key={character.id} value={character.id} disabled={!!game.players.find(player => player.characterId === character.id)}>{character.name}</MenuItem>)}
+            {service.game.cards.filter((c) => c.type === 'character').map((character) => <MenuItem key={character.id} value={character.id} disabled={!!game.players.find(player => player.character === character.id)}>{character.name}</MenuItem>)}
           </Select>
         </FormControl>
       </div>

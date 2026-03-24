@@ -1,9 +1,8 @@
-import { AppBar, Box, Button, Dialog, IconButton, Menu, MenuItem, Slide, Toolbar, Typography } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import CloseIcon from '@mui/icons-material/Close';
+import { Button, Dialog, IconButton, Toolbar, Typography } from '@mui/material';
+import { useEffect, useState } from 'react';
 import { CardPicker } from '../components/CardPicker';
 import { useCluedo } from '../components/CluedoContext';
-import CloseIcon from '@mui/icons-material/Close';
-import SettingsIcon from '@mui/icons-material/Settings';
 import PlayerHorizontalScrollWindow from '../components/PlayerHorizontalScrollWindow';
 import { PlayerSettings } from '../components/PlayerSettings';
 
@@ -15,31 +14,17 @@ export default function GameBoard() {
     service.initGame({ numberOfPlayers: 4 })
   }, [])
 
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-
-  const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
   const [open, setOpen] = useState(false);
-
-  const handleClickOpenDialog = () => {
-    setOpen(true);
-  };
 
   const handleCloseDialog = () => {
     setOpen(false);
   };
 
-  return <div className='wrapper'>
+  return <div className='gameboard'>
     {/* App bar */}
-    <AppBar position="static">
+    {/* <AppBar position="static" elevation={0} sx={{background: '#ffffff', color: '#363636', borderBottom: '1px solid #fff'}}>
       <Toolbar>
-        <Typography variant="h5" component="div" sx={{ flexGrow: 1, textAlign: 'start' }}>
+        <Typography fontWeight="medium" variant="h5" sx={{ flexGrow: 1, textAlign: 'start'}}>
           Cluedo Tracker
         </Typography>
 
@@ -70,52 +55,60 @@ export default function GameBoard() {
             onClose={handleClose}
           >
             <MenuItem onClick={handleClickOpenDialog}>Player Settings</MenuItem>
-            <MenuItem onClick={handleClose}>Undo Last Action</MenuItem>
-            <MenuItem onClick={handleClose}>Reset Game</MenuItem>
+            <MenuItem onClick={handleClose} disabled>Undo Last Action</MenuItem>
+            <MenuItem onClick={handleClose} disabled>Reset Game</MenuItem>
           </Menu>
         </div>
       </Toolbar>
-    </AppBar>
+    </AppBar> */}
 
     <Dialog
       fullScreen
       open={open}
       onClose={handleCloseDialog}
     >
-       <Toolbar>
-            <IconButton
-              edge="start"
-              color="inherit"
-              onClick={handleCloseDialog}
-              aria-label="close"
-            >
-              <CloseIcon />
-            </IconButton>
-            <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
-              Player Settings
-            </Typography>
-            <Button autoFocus color="inherit" onClick={handleCloseDialog}>
-              save
-            </Button>
-          </Toolbar>
+      <Toolbar>
+        <IconButton
+          edge="start"
+          color="inherit"
+          onClick={handleCloseDialog}
+          aria-label="close"
+        >
+          <CloseIcon />
+        </IconButton>
+        <Typography sx={{ ml: 2, flex: 1 }} variant="h6" component="div">
+          Player Settings
+        </Typography>
+        <Button autoFocus color="inherit" onClick={handleCloseDialog}>
+          save
+        </Button>
+      </Toolbar>
       <PlayerSettings />
     </Dialog>
 
 
+    {game.players.length === 0 && <Typography variant="h4" sx={{ mt: 5 }}>Loading...</Typography>}
 
-    <div className='player-window'>
-      <PlayerHorizontalScrollWindow showPlayer={game.players[2]?.id} />
-    </div>
+    {game.players.length > 0 &&
+      <>
+        <div className='player-window'>
+          <PlayerHorizontalScrollWindow showPlayer={service.getAccusationPlayerId()} />
+        </div>
 
+        <div>
+          <Typography>{'Accuser '+(game.accusationTurn+1)}</Typography>
+          <Typography>{'Revealer '+(game.revealTurn+1)}</Typography>
+        </div>
 
-    <div className='card-window'>
-      <CardPicker disabledIds={[]} selectedIds={[]} onChange={console.log} />
-    </div>
+        <div className='card-window'>
+          <CardPicker />
+        </div>
 
-
-    <div className='player-window'>
-      <PlayerHorizontalScrollWindow showPlayer={game.players[3]?.id} />
-    </div>
+        <div className={`player-window ${game.mode === 'reveal' ? 'show' : 'hidden'}`}>
+          <PlayerHorizontalScrollWindow showPlayer={service.getRevealPlayerId()} />
+        </div>
+      </>
+    }
   </div>
 
 

@@ -16,7 +16,10 @@ export const CluedoProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     boardCards: [],
     cards: [],
     accusations: [],
-    reveals: []
+    reveals: [],
+    mode: 'accusation',
+    accusationTurn: 0,
+    revealTurn: 1,
   });
 
   const service = new CluedoService((updatedGame) => setGame(updatedGame));
