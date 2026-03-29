@@ -11,19 +11,17 @@ export const CluedoPlayingCard = ({
 }: {
     card: any;
     disabled?: boolean;
-    handleClick: (id: string, type: string) => void;
+    handleClick: (event: React.MouseEvent<HTMLButtonElement>, id: string, type: string) => void;
     selected: boolean;
     hidden: boolean
 }) => {
-    const { game, service } = useCluedo();
+    const { service } = useCluedo();
 
-    // const [ownerSelected, setOwnerSelected] = useState(null)
-
-    const owner = game.mode === 'normal' ? null : service.getPlayer(card.ownerId)
+    const owner = card.ownerId === 'gameboard' ? { name: 'Game Board', character: null } : service.getPlayer(card.ownerId);
     const ownerColor = owner?.character ? service.getCard(owner.character)?.color : '#efefef'
 
     return (
-        <Button disabled={disabled} onClick={() => handleClick(card.id, card.type)} sx={{ p: 0 }} className={`card-wrapper ${selected ? 'selected' : ''} ${hidden ? 'hidden' : 'show'}`}>
+        <Button disabled={disabled} onClick={(e) => handleClick(e, card.id, card.type)} sx={{ p: 0 }} className={`card-wrapper ${selected ? 'selected' : ''} ${hidden ? 'hidden' : 'show'}`}>
             <Paper elevation={selected ? 8 : 3} sx={{
                 width: '100%',
                 height: '100%',
@@ -48,7 +46,7 @@ export const CluedoPlayingCard = ({
                         alignItems: 'center',
                         justifyContent: 'center',
                     }}>
-                        <Typography variant="caption" color={ownerColor && ownerColor !== '#ffffff' && ownerColor !== '#efefef' ? '#ffffff' : '#000000'}>{service.getPlayer(card.ownerId)?.name}</Typography>
+                        <Typography variant="caption" color={ownerColor && ownerColor !== '#ffffff' && ownerColor !== '#efefef' ? '#ffffff' : '#000000'}>{owner?.name}</Typography>
                     </Box>
                 }
             </Paper>

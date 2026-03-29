@@ -20,6 +20,7 @@ export const CluedoProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     mode: 'accusation',
     accusationTurn: 0,
     revealTurn: 1,
+    whoDoneIt: { character: '', weapon: '', location: '' },
   });
 
   const service = new CluedoService((updatedGame) => setGame(updatedGame));

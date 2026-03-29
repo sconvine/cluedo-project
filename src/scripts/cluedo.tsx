@@ -22,7 +22,7 @@ export interface Accusation {
     location: string;
 }
 
-export interface MurderCards {
+export interface WhoDoneItCardss {
     character: string;
     weapon: string;
     location: string;
@@ -53,6 +53,8 @@ export interface Game {
     mode: 'accusation' | 'reveal' | 'normal';
     accusationTurn: number;
     revealTurn: number;
+    whoDoneIt: WhoDoneItCardss;
+    notification?: Array<string>;
 }
 
 export class CluedoService {
@@ -70,6 +72,12 @@ export class CluedoService {
             mode: 'normal',
             accusationTurn: 0,
             revealTurn: 1,
+            whoDoneIt: {
+                character: '',
+                weapon: '',
+                location: ''
+            },
+            notification: []
         };
 
         const weaponColor = '#433a66'
@@ -77,11 +85,11 @@ export class CluedoService {
 
         this.game.cards = [
             { id: 'scarlet', name: 'Miss Scarlett', color: '#740000', type: 'character' },
-            { id: 'mustard', name: 'Colonel Mustard', color: '#707200', type: 'character' },
+            { id: 'mustard', name: 'Col. Mustard', color: '#707200', type: 'character' },
             { id: 'white', name: 'Mrs. White', color: '#ffffff', type: 'character' },
             { id: 'green', name: 'Mr. Green', color: '#114900', type: 'character' },
             { id: 'blue', name: 'Mrs. Peacock', color: '#1833cf', type: 'character' },
-            { id: 'plum', name: 'Professor Plum', color: '#70004b', type: 'character' },
+            { id: 'plum', name: 'Prof. Plum', color: '#70004b', type: 'character' },
             { id: 'candle', name: 'Candlestick', type: 'weapon', color: weaponColor },
             { id: 'knife', name: 'Knife', type: 'weapon', color: weaponColor },
             { id: 'pipe', name: 'Lead Pipe', type: 'weapon', color: weaponColor },
@@ -101,13 +109,13 @@ export class CluedoService {
     }
 
     initGame({ numberOfPlayers }: any) {
-        if (this.game.players.length < numberOfPlayers) {
-            for (let i = 0; i < numberOfPlayers; i++) {
-                const playerId: string = uuidv4();
-                this.createPlayer({ id: playerId, name: `Player ${i + 1}` } as Player)
-            }
-            this.onGameUpdate({ ...this.game });
+        this.game.players = []
+        for (let i = 0; i < numberOfPlayers; i++) {
+            const playerId: string = uuidv4();
+            this.createPlayer({ id: playerId, name: `Player ${i + 1}` } as Player)
         }
+        this.addNotification(`hello it's ${this.game.players.length}`)
+        this.onGameUpdate({ ...this.game });
     }
 
     createPlayer(player: Player): void {
@@ -137,13 +145,23 @@ export class CluedoService {
     }
 
     addCardOwnerId(id: string, ownerId: string) {
+        console.log('updated')
         this.game.cards = this.game.cards.map((card) => {
             if (id === card.id) {
                 if (card.ownerId !== ownerId) {
                     return ({ ...card, ownerId: ownerId })
-                } else {
-                    return ({ ...card, ownerId: null })
                 }
+            }
+            return card
+        });
+        // this.calculateCards()
+        this.onGameUpdate({ ...this.game });
+    }
+
+    removeCardOwnerId(id: string) {
+        this.game.cards = this.game.cards.map((card) => {
+            if (id === card.id) {
+                return ({ ...card, ownerId: null })
             }
             return card
         })
@@ -158,7 +176,7 @@ export class CluedoService {
                 weapon,
                 location
             });
-            this.game.mode = 'reveal';
+            this.setGameMode('reveal');
             this.onGameUpdate({ ...this.game });
         }
     }
@@ -173,8 +191,10 @@ export class CluedoService {
                 revealedCard
             });
 
+            this.calculateCards()
+
             if (revealedCard) {
-                this.game.mode = 'accusation';
+                this.setGameMode('normal');
                 this.accusationNextTurn()
             } else {
                 this.revealNextTurn()
@@ -185,6 +205,11 @@ export class CluedoService {
     getAccusationPlayerId() {
         const player = this.game.players[this.game.accusationTurn];
         return player?.id || '';
+    }
+
+    setGameMode(gameMode: 'accusation' | 'reveal' | 'normal') {
+        this.game.mode = gameMode;
+        this.onGameUpdate({ ...this.game });
     }
 
     accusationNextTurn() {
@@ -203,7 +228,7 @@ export class CluedoService {
         this.game.revealTurn = this.game.revealTurn < this.game.players.length - 1 ? this.game.revealTurn + 1 : 0;
 
         if (this.getRevealPlayerId() === this.getAccusationPlayerId()) {
-            this.game.mode = 'accusation';
+            this.setGameMode('normal');
             this.accusationNextTurn();
         } else {
             this.onGameUpdate({ ...this.game });
@@ -211,11 +236,15 @@ export class CluedoService {
         this.calculateCards()
     }
 
+    addNotification(message: string) {
+        this.game.notification = this.game.notification || [];
+        this.game.notification.push(message);
+        this.onGameUpdate({ ...this.game });
+    }
+
     calculateCards() {
         // calculate cards for each player based on accusations and reveals
-        const whoDoneIt: MurderCards = { character: '', weapon: '', location: '' }
-
-
+        const whoDoneIt: WhoDoneItCardss = { character: '', weapon: '', location: '' }
 
         this.game.players.forEach((player) => {
             // Establish what player doesn't have
@@ -232,30 +261,31 @@ export class CluedoService {
                     if (revealFilterOutKnowNegatives.length === 1) {
                         // restart the function now that we know another cards owner
                         this.addCardOwnerId(revealFilterOutKnowNegatives[0], player.id);
-                        this.calculateCards()
+                        this.addNotification(`${this.getPlayer(player.id)?.name} has the ${this.getCard(revealFilterOutKnowNegatives[0])?.name}!`)
                         return;
                     }
                 })
             // Check if there's been reveals that included any known cards with owners
             this.game.reveals.filter((reveal) => player.id === reveal.playerId && reveal.revealedCard)
-                .forEach((reveal) => {
+                .every((reveal) => {
                     const cardsRevealArray = [reveal.character, reveal.weapon, reveal.location]
-                    const ownedCards = this.game.cards.filter((card) => !card.ownerId).map(card => card.id)
+                    const ownedCards = this.game.cards.filter((card) => card.ownerId && player.id != card.ownerId).map(card => card.id)
                     const revealFilterOutKnowOwned = cardsRevealArray.filter(card => !ownedCards.includes(card))
                     if (revealFilterOutKnowOwned.length === 1) {
                         // restart the function now that we know another cards owner
                         this.addCardOwnerId(revealFilterOutKnowOwned[0], player.id);
-                        this.calculateCards()
-                        return;
+                        this.addNotification(`${this.getPlayer(player.id)?.name} has the ${this.getCard(revealFilterOutKnowOwned[0])?.name}!`)
+                        return false;
                     }
+                    return true;
                 })
-
         })
 
         // if all but one card of each type are known them we know who done it
         const remainingCharacters = this.game.cards.filter((card) => card.type === 'character').filter((card) => !card.ownerId)
-        const remainingWeapons = this.game.cards.filter((card) => card.type === 'character').filter((card) => !card.ownerId)
-        const remainingLocation = this.game.cards.filter((card) => card.type === 'character').filter((card) => !card.ownerId)
+        const remainingWeapons = this.game.cards.filter((card) => card.type === 'weapon').filter((card) => !card.ownerId)
+        const remainingLocation = this.game.cards.filter((card) => card.type === 'location').filter((card) => !card.ownerId)
+
 
         if (remainingCharacters.length === 1) {
             whoDoneIt.character = remainingCharacters[0].id
@@ -265,6 +295,10 @@ export class CluedoService {
         }
         if (remainingLocation.length === 1) {
             whoDoneIt.location = remainingLocation[0].id
+        }
+        this.game.whoDoneIt = whoDoneIt;
+        if (this.game.whoDoneIt.character && this.game.whoDoneIt.weapon && this.game.whoDoneIt.location) {
+            this.addNotification(`The case is solved! It was ${this.game.whoDoneIt.character} with the ${this.game.whoDoneIt.weapon} in the ${this.game.whoDoneIt.location}!`)
         }
         this.onGameUpdate({ ...this.game });
     }

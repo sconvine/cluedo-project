@@ -1,29 +1,63 @@
+import { Box, Button, Stack } from "@mui/material";
 import { useEffect, useState } from "react";
+import type { Cards } from "../scripts/cluedo";
 import { useCluedo } from "./CluedoContext";
 import { CluedoPlayingCard } from "./CluedoPlayingCard";
-import { Box, Button, Stack, Typography } from "@mui/material";
+
+import ClickAwayListener from '@mui/material/ClickAwayListener';
+import Grow from '@mui/material/Grow';
+import MenuItem from '@mui/material/MenuItem';
+import MenuList from '@mui/material/MenuList';
+import Paper from '@mui/material/Paper';
+import Popper from '@mui/material/Popper';
+import * as React from 'react';
 
 export const CardPicker = () => {
     const { game, service } = useCluedo();
 
+    const [cardSelected, setCardSelected] = useState<Cards | null>(null);
+    const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null);
+
+    const handleCloseMenu = (event: Event | React.SyntheticEvent) => {
+        console.log('closing menu', event)
+        setAnchorEl(null);
+    };
+
+    useEffect(() => {
+        if (game.mode === 'normal') {
+            setCardSelected((prev) => {
+                if (prev) {
+                    return service.getCard(prev.id) ?? null
+                }
+                return null
+            })
+        }
+    }, [game.cards])
+
+
     const [selected, setSelected] = useState({ character: undefined, weapon: undefined, location: undefined });
 
     useEffect(() => {
-        if (game.mode === 'accusation') {
+        if (game.mode !== 'reveal') {
             setSelected({ character: undefined, weapon: undefined, location: undefined })
         }
     }, [game.mode])
 
-    const toggleSelection = (cardId: string, cardType: string) => {
-        if(game.mode === 'accusation'){
+    const cardClick = (event: React.MouseEvent<HTMLButtonElement>, cardId: string, cardType: string) => {
+        if (game.mode === 'accusation') {
             setSelected((prevSelected) => {
                 if (prevSelected[cardType as keyof typeof prevSelected] === cardId) {
                     return { ...prevSelected, [cardType]: undefined };
                 }
                 return { ...prevSelected, [cardType as keyof typeof prevSelected]: cardId };
             });
-        } else {
+        }
+        if (game.mode === 'reveal') {
             service.addCardOwnerId(cardId, service.getRevealPlayerId()!)
+        }
+        if (game.mode === 'normal') {
+            setCardSelected(service.getCard(cardId) ?? null);
+            setAnchorEl(event.currentTarget as HTMLButtonElement);
         }
     }
 
@@ -53,17 +87,23 @@ export const CardPicker = () => {
         return true;
     }
 
+    const onAddOwner = (selectedId: string, ownerId: string) => {
+        service.addCardOwnerId(selectedId, ownerId)
+        setAnchorEl(null);
+    }
+
     return (
         <>
             <div className='card-container'>
-                {game.cards?.map((card) => <CluedoPlayingCard selected={isCardSelected(card.id, card.type)} hidden={isCardHidden(card.id, card.type)} key={card.id} card={card} handleClick={toggleSelection} />)}
+                {game.cards?.map((card) => <CluedoPlayingCard selected={isCardSelected(card.id, card.type)} hidden={isCardHidden(card.id, card.type)} key={card.id} card={card} handleClick={cardClick} />)}
             </div>
-            {game.mode === 'accusation'
-                ? <Box sx={{ padding: 4, display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
+            {game.mode === 'accusation' &&
+                <Box sx={{ padding: 4, display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
                     <Button variant="contained" onClick={applyAccustation} disabled={isAccustionButtonDisabled()}>Submit Accusation</Button>
                 </Box>
-                : <Box sx={{ padding: 4, display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
-                    <Typography variant="h6">Click the revealed card if you know which one it was or select from below</Typography>
+            }
+            {game.mode === 'reveal' &&
+                <Box sx={{ padding: 4, display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'center' }}>
                     <Stack
                         direction="row"
                         spacing={2}
@@ -77,6 +117,43 @@ export const CardPicker = () => {
                     </Stack>
                 </Box>
             }
+            {cardSelected &&
+                <Popper
+                    open={!!anchorEl}
+                    anchorEl={anchorEl}
+                    transition
+                    role="undefined"
+                >
+                    {({ TransitionProps, placement }) => (
+                        <Grow
+                            {...TransitionProps}
+                            style={{
+                                transformOrigin:
+                                    placement === 'bottom-start' ? 'left top' : 'left bottom',
+                            }}
+                        >
+                            <Paper>
+                                <ClickAwayListener onClickAway={handleCloseMenu}>
+                                    <MenuList
+                                        autoFocusItem={!!anchorEl}
+                                        id="composition-menu"
+                                        aria-labelledby="composition-button"
+                                    >
+                                        {game.players.map((player) => <MenuItem key={player.id} onClick={() => onAddOwner(cardSelected.id, player.id)}>{player.name}</MenuItem>)}
+                                        {game.players.length < 6 &&
+                                            <MenuItem onClick={() => onAddOwner(cardSelected.id, 'gameboard')}>Game Board</MenuItem>
+                                        }
+                                        {cardSelected?.ownerId &&
+                                            <MenuItem onClick={() => service.removeCardOwnerId(cardSelected.id)}>Remove Owner</MenuItem>
+                                        }
+                                    </MenuList>
+                                </ClickAwayListener>
+                            </Paper>
+                        </Grow>
+                    )}
+                </Popper>
+            }
+
         </>
     )
 }

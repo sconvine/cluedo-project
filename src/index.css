@@ -121,19 +121,42 @@ code {
   height: 100vh;
 }
 
-.player-window {
+.game-buttons {
   display: flex;
   align-items: center;
-  height: 180px;
+  flex-direction: column;
+  padding: 8px;
+  gap: 8px;
+  height: 110px;
   overflow: hidden;
-  scrollbar-width: none;
+  transition: height 0.3s ease, opacity 0.5s ease-out;
+}
+
+.game-buttons.show {
+  opacity: 1;
+}
+
+.game-buttons.hidden {
+  opacity: 0;
+  height: 0;
+}
+
+.player-window {
+  display: flex;
+  /* align-items: center; */
+  /* height: 180px; */
+  /* overflow: hidden; */
+  /* scrollbar-width: none;
   -ms-overflow-style: none;
-  transition: height 0.3s ease;
+  transition: height 0.3s ease; */
+  opacity: 1;
+  transition: opacity 0.5s ease-out;
 }
 
 
 .player-window.hidden {
-  height: 0;
+  /* height: 0; */
+  opacity: 0;
 }
 
 .card-window {
@@ -144,54 +167,37 @@ code {
 
 .player-box {
   display: flex;
+  flex-direction: row;
   align-items: center;
   gap: 8px;
+  margin: 16px 0;
+}
+
+.player {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-left: 16px;
 }
 
 .card-container {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-}
-
-.card-container .card-wrapper.selected .card {
-  /* outline: 4px solid var(--accent); */
+  position: absolute;
+  bottom: 0;
+  min-height:465px;
 }
 
 .card-container .card-wrapper.show {
   opacity: 1;
-  display: block;
-}
-
-@starting-style {
-  .card-container .card-wrapper.show {
-    opacity: 0;
-  }
 }
 
 .card-container .card-wrapper {
   margin: 8px;
-  opacity: 0;
-  display: none;
-  width: 100px;
-  min-height: 144px;
-  transition: opacity 0.5s ease-out, display 0.5s allow-discrete;
-}
-
-.card-container .card-wrapper .card {
-  box-sizing: border-box;
-  width: 100px;
-  height: 144px;
-}
-
-.card.character {
-  background: #cefdc4
-}
-
-.card.weapon {
-  background: #f5abab
-}
-
-.card.location {
-  background: #abb6f5
+  opacity: .3;
+  width: 110px;
+  height: 50px;
+  transition: opacity 0.5s ease-out;
 }
